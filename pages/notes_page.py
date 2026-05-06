@@ -2,6 +2,10 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
+# ✅ ADDED (Agentic layer)
+from utils.agentic_utils import smart_wait, retry
+
+
 class NotesPage:
 
     def __init__(self, driver):
@@ -13,17 +17,14 @@ class NotesPage:
         self.description = (By.ID, "description")
         self.category = (By.XPATH, "//select")
 
-        # ✅ CHANGED TO CREATE BUTTON
         self.save_btn = (By.XPATH, "//button[contains(text(),'Create')]")
 
         self.note_text = (By.XPATH, "//*[contains(text(),'Automation Note')]")
 
     def create_note(self, title, description, category):
 
-        # open modal
-        add_btn = self.wait.until(
-            EC.element_to_be_clickable(self.add_note_btn)
-        )
+        # open modal (SMART WAIT ADDED)
+        add_btn = smart_wait(self.driver, self.add_note_btn)
         self.driver.execute_script("arguments[0].click();", add_btn)
 
         # wait modal
@@ -40,10 +41,8 @@ class NotesPage:
 
         self.driver.find_element(*self.category).send_keys(category)
 
-        # click CREATE button
-        create_btn = self.wait.until(
-            EC.element_to_be_clickable(self.save_btn)
-        )
+        # click CREATE button (SMART WAIT ADDED)
+        create_btn = smart_wait(self.driver, self.save_btn)
         self.driver.execute_script("arguments[0].click();", create_btn)
 
         # wait until note appears
@@ -60,14 +59,14 @@ class NotesPage:
 
     def delete_note(self, title):
 
-        # locate the note dynamically
+        # locate note dynamically
         note = self.wait.until(
             EC.presence_of_element_located(
                 (By.XPATH, f"//*[contains(text(),'{title}')]/ancestor::div[1]")
             )
         )
 
-        # click delete button inside that note
+        # click delete button
         delete_btn = note.find_element(
             By.XPATH,
             ".//button[contains(text(),'Delete')]"
@@ -75,7 +74,7 @@ class NotesPage:
 
         self.driver.execute_script("arguments[0].click();", delete_btn)
 
-        # optional confirm popup handling
+        # confirm popup (if exists)
         try:
             confirm = self.wait.until(
                 EC.element_to_be_clickable(
@@ -86,7 +85,7 @@ class NotesPage:
         except:
             pass
 
-        # wait until note disappears from UI
+        # wait until note disappears
         self.wait.until(
             EC.invisibility_of_element_located(
                 (By.XPATH, f"//*[contains(text(),'{title}')]")
