@@ -19,7 +19,10 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 sh '''
-                python3 -m pip install -r requirements.txt
+                python3 -m venv venv
+                . venv/bin/activate
+                pip install --upgrade pip
+                pip install -r requirements.txt
                 '''
             }
         }
@@ -36,7 +39,8 @@ pipeline {
         stage('Run Tests in Parallel') {
             steps {
                 sh '''
-                python3 -m pytest tests -n 2 \
+                . venv/bin/activate
+                pytest tests -n 2 \
                 --dist loadscope \
                 --cache-clear \
                 --html=reports/report.html \
