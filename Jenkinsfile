@@ -3,48 +3,76 @@ pipeline {
 
     stages {
 
-        stage('Checkout Code from Git') {
+        stage('Checkout SCM') {
             steps {
                 git branch: 'main',
-                    url: 'https://github.com/your-username/your-repo.git'
+                url: 'https://github.com/bhanureddy0106/automation-framework.git'
+            }
+        }
+
+        stage('Go To Project Folder') {
+            steps {
+                dir('C:\\Users\\Bhanu\\Desktop\\Automation Framework Architecture') {
+                    bat 'dir'
+                }
             }
         }
 
         stage('Install Dependencies') {
             steps {
-                bat '''
-                python -m venv venv
-                venv\\Scripts\\activate
-                pip install -r requirements.txt
-                '''
+                dir('C:\\Users\\Bhanu\\Desktop\\Automation Framework Architecture') {
+                    bat 'venv\\Scripts\\python.exe -m pip install -r requirements.txt'
+                }
             }
         }
 
-        stage('Start Selenium Grid (Docker)') {
+        stage('Clean Previous Reports') {
             steps {
-                bat 'docker compose up -d'
+                dir('C:\\Users\\Bhanu\\Desktop\\Automation Framework Architecture') {
+                    bat '''
+                        if exist allure-results rmdir /s /q allure-results
+                        if exist reports rmdir /s /q reports
+                        mkdir reports
+                    '''
+                }
             }
         }
 
-        stage('Run Tests') {
+        stage('Run Tests in Parallel') {
             steps {
-                bat '''
-                venv\\Scripts\\activate
-                pytest -v --alluredir=reports/allure-results
-                '''
+                dir('C:\\Users\\Bhanu\\Desktop\\Automation Framework Architecture') {
+                    bat '''
+                        venv\\Scripts\\python.exe -m pytest tests -n 2 ^
+                        --dist loadscope ^
+                        --cache-clear ^
+                        --html=reports\\report.html ^
+                        --self-contained-html ^
+                        --alluredir=allure-results
+                    '''
+                }
             }
         }
 
-        stage('Generate Allure Report') {
+        stage('Archive Reports') {
             steps {
-                bat 'allure generate reports/allure-results -o reports/allure-report --clean'
+                dir('C:\\Users\\Bhanu\\Desktop\\Automation Framework Architecture') {
+                    archiveArtifacts artifacts: 'reports/*, screenshots/*, logs/*, allure-results/*', allowEmptyArchive: true
+                }
             }
         }
-    }
 
-    post {
-        always {
-            echo 'Pipeline Execution Completed'
+        stage('Publish HTML Report') {
+            steps {
+                publishHTML([
+                    allowMissing: true,
+                    alwaysLinkToLastBuild: true,
+                    keepAll: true,
+                    reportDir: 'reports',
+                    reportFiles: 'report.html',
+                    reportName: 'Pytest HTML Report'
+                ])
+            }
         }
+
     }
 }
