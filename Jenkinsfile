@@ -33,8 +33,8 @@ pipeline {
                     bat '''
                     if exist allure-results rmdir /s /q allure-results
                     if exist reports rmdir /s /q reports
+                    mkdir reports
                     '''
-
                 }
             }
         }
@@ -44,9 +44,13 @@ pipeline {
                 dir('C:\\Users\\Bhanu\\Desktop\\Automation Framework Architecture') {
 
                     bat '''
-                    venv\\Scripts\\python.exe -m pytest tests -n 2 --html=reports\\report.html --self-contained-html --alluredir=allure-results
+                    venv\\Scripts\\python.exe -m pytest tests -n 2 ^
+                    --dist loadscope ^
+                    --cache-clear ^
+                    --html=reports\\report.html ^
+                    --self-contained-html ^
+                    --alluredir=allure-results
                     '''
-
                 }
             }
         }
@@ -57,7 +61,6 @@ pipeline {
 
                     archiveArtifacts artifacts: 'reports/*, screenshots/*, logs/*, allure-results/*',
                     allowEmptyArchive: true
-
                 }
             }
         }
