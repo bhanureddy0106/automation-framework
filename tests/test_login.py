@@ -3,7 +3,7 @@ from selenium import webdriver
 from pages.login_page import LoginPage
 from utils.config_loader import load_config
 from utils.performance_logger import log_performance  
-
+from utils.agentic_utils import measure_time
 
 # SIMPLE LOGIN TEST
 def test_login():
@@ -13,7 +13,7 @@ def test_login():
     start = time.time()   #START TIMER
     driver.get(config["url"])
     login = LoginPage(driver)
-    login.login(config["email"], config["password"])
+    measure_time(lambda: login.login(config["email"], config["password"]))
     end = time.time()     #END TIMER
     duration = end - start
     print(f"[UI LOGIN TIME]: {duration}")
@@ -28,7 +28,7 @@ def test_successful_ui_login(driver):
     login_page = LoginPage(driver)
     start = time.time()   #START TIMER
     login_page.open_login_page()
-    login_page.login(config["email"], config["password"])
+    measure_time(lambda: login_page.login(config["email"], config["password"]))
     end = time.time()     #END TIMER
     duration = end - start
     print(f"[UI LOGIN FLOW TIME]: {duration}")
