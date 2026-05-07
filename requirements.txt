@@ -5,3 +5,4 @@ requests
 pyyaml
 webdriver-manager
 allure-pytest
+pytest-html
