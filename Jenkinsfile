@@ -3,71 +3,48 @@ pipeline {
 
     stages {
 
-        stage('Checkout SCM') {
+        stage('Checkout Code from Git') {
             steps {
                 git branch: 'main',
-                url: 'https://github.com/bhanureddy0106/automation-framework.git'
-            }
-        }
-
-        stage('Go To Project Folder') {
-            steps {
-                sh 'ls'
+                    url: 'https://github.com/your-username/your-repo.git'
             }
         }
 
         stage('Install Dependencies') {
             steps {
-                sh '''
-                python3 -m venv venv
-                . venv/bin/activate
-                pip install --upgrade pip
+                bat '''
+                python -m venv venv
+                venv\\Scripts\\activate
                 pip install -r requirements.txt
                 '''
             }
         }
 
-        stage('Clean Previous Reports') {
+        stage('Start Selenium Grid (Docker)') {
             steps {
-                sh '''
-                rm -rf allure-results reports
-                mkdir -p reports
+                bat 'docker compose up -d'
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                bat '''
+                venv\\Scripts\\activate
+                pytest -v --alluredir=reports/allure-results
                 '''
             }
         }
 
-        stage('Run Tests in Parallel') {
+        stage('Generate Allure Report') {
             steps {
-                sh '''
-                . venv/bin/activate
-                pytest tests -n 2 \
-                --dist loadscope \
-                --cache-clear \
-                --html=reports/report.html \
-                --self-contained-html \
-                --alluredir=allure-results
-                '''
+                bat 'allure generate reports/allure-results -o reports/allure-report --clean'
             }
         }
+    }
 
-        stage('Archive Reports') {
-            steps {
-                archiveArtifacts artifacts: 'reports/*, screenshots/*, logs/*, allure-results/*',
-                allowEmptyArchive: true
-            }
-        }
-
-        stage('Publish HTML Report') {
-            steps {
-                publishHTML([
-                    allowMissing: true,
-                    alwaysLinkToLastBuild: true,
-                    keepAll: true,
-                    reportDir: 'reports',
-                    reportFiles: 'report.html',
-                    reportName: 'Pytest HTML Report'
-                ])
-            }
+    post {
+        always {
+            echo 'Pipeline Execution Completed'
         }
     }
 }
