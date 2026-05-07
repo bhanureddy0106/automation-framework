@@ -10,47 +10,61 @@ pipeline {
             }
         }
 
+        stage('Go To Project Folder') {
+            steps {
+                dir('C:\\Users\\Bhanu\\Desktop\\Automation Framework Architecture') {
+                    bat 'dir'
+                }
+            }
+        }
+
         stage('Install Dependencies') {
             steps {
-                bat '''
-                    venv\\Scripts\\python.exe -m pip install -r requirements.txt
-                '''
+                dir('C:\\Users\\Bhanu\\Desktop\\Automation Framework Architecture') {
+                    bat 'venv\\Scripts\\python.exe -m pip install -r requirements.txt'
+                }
             }
         }
 
         stage('Clean Previous Reports') {
             steps {
-                bat '''
-                    if exist allure-results rmdir /s /q allure-results
-                    if exist reports rmdir /s /q reports
-                    mkdir reports
-                '''
+                dir('C:\\Users\\Bhanu\\Desktop\\Automation Framework Architecture') {
+                    bat '''
+                        if exist allure-results rmdir /s /q allure-results
+                        if exist reports rmdir /s /q reports
+                        mkdir reports
+                    '''
+                }
             }
         }
 
         stage('Run Tests in Parallel') {
             steps {
-                bat '''
-                    venv\\Scripts\\python.exe -m pytest tests -n 2 ^
-                    --dist loadscope ^
-                    --cache-clear ^
-                    --html=reports\\report.html ^
-                    --self-contained-html ^
-                    --alluredir=allure-results
-                '''
+                dir('C:\\Users\\Bhanu\\Desktop\\Automation Framework Architecture') {
+                    bat '''
+                        venv\\Scripts\\python.exe -m pytest tests -n 2 ^
+                        --dist loadscope ^
+                        --cache-clear ^
+                        --html=reports\\report.html ^
+                        --self-contained-html ^
+                        --alluredir=allure-results
+                    '''
+                }
             }
         }
 
         stage('Archive Reports') {
             steps {
-                archiveArtifacts artifacts: 'reports/**, screenshots/**, logs/**, allure-results/**', allowEmptyArchive: true
+                dir('C:\\Users\\Bhanu\\Desktop\\Automation Framework Architecture') {
+                    archiveArtifacts artifacts: 'reports/*, screenshots/*, logs/*, allure-results/*', allowEmptyArchive: true
+                }
             }
         }
 
         stage('Publish HTML Report') {
             steps {
                 publishHTML([
-                    allowMissing: false,
+                    allowMissing: true,
                     alwaysLinkToLastBuild: true,
                     keepAll: true,
                     reportDir: 'reports',
