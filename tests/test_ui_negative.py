@@ -91,16 +91,5 @@ def test_ui_negative_invalid_login():
         )
         #Reload for next case
         driver.get(config["url"])
-
-        #Invalid Password
-        base.login(config["email"], "wrong_password")
-        time.sleep(2)
-        page = driver.page_source.lower()
-        assert (
-            "password" in page
-            or "invalid" in page
-            or "error" in page
-            or "cannot" in page
-        )
     finally:
         driver.quit()

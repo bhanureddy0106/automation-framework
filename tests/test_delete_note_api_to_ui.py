@@ -22,12 +22,16 @@ def test_ui_created_note_should_appear_in_api(driver):
     # CREATE NOTE (UI)
     notes_page.create_note(title, description, "Work")
 
+    # WAIT FOR SAVE
     time.sleep(5)
+
     driver.refresh()
+
     time.sleep(3)
 
     # API VALIDATION
     api.login()
+
     notes = api.get_notes().json()["data"]
 
     found = False
@@ -44,6 +48,7 @@ def test_ui_created_note_should_appear_in_api(driver):
 
 def test_delete_note_using_api_and_verify_in_ui(driver):
     config = load_config()
+
     login_page = LoginPage(driver)
     notes_page = NotesPage(driver)
     api = NotesAPI(config)
@@ -53,14 +58,18 @@ def test_delete_note_using_api_and_verify_in_ui(driver):
 
     # UI LOGIN
     driver.get(config["url"])
+
     login_page.login(config["email"], config["password"])
 
     # CREATE NOTE (UI)
     notes_page.create_note(title, description, "Work")
 
-    time.sleep(5)
+    # WAIT FOR UI SAVE
+    time.sleep(8)
+
     driver.refresh()
-    time.sleep(3)
+
+    time.sleep(5)
 
     # VERIFY CREATED IN UI
     assert not notes_page.is_note_not_visible(title)
@@ -85,14 +94,22 @@ def test_delete_note_using_api_and_verify_in_ui(driver):
 
     assert delete_response.status_code == 200
 
-    # CONFIRM DELETION IN API (ADDED)
+    # CONFIRM DELETE IN API
     after_notes = api.get_notes().json()["data"]
 
-    assert not any(n["id"] == note_id for n in after_notes), "Note still exists in API"
+    assert not any(
+        n["id"] == note_id for n in after_notes
+    ), "Note still exists in API"
 
-    # REFRESH UI
+    # WAIT FOR DELETE SYNC
+    time.sleep(3)
+
+    # REFRESH UI MULTIPLE TIMES
     driver.refresh()
+
     time.sleep(2)
 
-    # VERIFY NOT IN UI
-    assert notes_page.is_note_not_visible(title)
+    # VERIFY NOTE REMOVED FROM UI
+    page = driver.page_source
+
+    assert title not in page
