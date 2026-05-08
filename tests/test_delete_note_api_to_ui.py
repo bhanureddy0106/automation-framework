@@ -1,115 +1,161 @@
 import time
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
+
 from utils.config_loader import load_config
 from api.notes_api import NotesAPI
 from pages.login_page import LoginPage
 from pages.notes_page import NotesPage
 
+
 # UI → API VALIDATION
 
-def test_ui_created_note_should_appear_in_api(driver):
+def test_ui_created_note_should_appear_in_api():
+
     config = load_config()
-    login_page = LoginPage(driver)
-    notes_page = NotesPage(driver)
-    api = NotesAPI(config)
 
-    title = f"E2E UI API Note {int(time.time())}"
-    description = "Created from UI and verified using API"
+    driver = webdriver.Chrome(
+        service=Service(ChromeDriverManager().install())
+    )
 
-    # UI LOGIN
-    driver.get(config["url"])
-    login_page.login(config["email"], config["password"])
+    driver.maximize_window()
 
-    # CREATE NOTE (UI)
-    notes_page.create_note(title, description, "Work")
+    try:
+        login_page = LoginPage(driver)
+        notes_page = NotesPage(driver)
+        api = NotesAPI(config)
 
-    # WAIT FOR SAVE
-    time.sleep(5)
+        title = f"E2E UI API Note {int(time.time())}"
+        description = "Created from UI and verified using API"
 
-    driver.refresh()
+        # UI LOGIN
+        driver.get(config["url"])
 
-    time.sleep(3)
+        login_page.login(
+            config["email"],
+            config["password"]
+        )
 
-    # API VALIDATION
-    api.login()
+        # CREATE NOTE (UI)
+        notes_page.create_note(
+            title,
+            description,
+            "Work"
+        )
 
-    notes = api.get_notes().json()["data"]
+        # WAIT FOR SAVE
+        time.sleep(5)
 
-    found = False
+        driver.refresh()
 
-    for note in notes:
-        if note["title"] == title and note["description"] == description:
-            found = True
-            break
+        time.sleep(3)
 
-    assert found, "UI created note not found in API"
+        # API VALIDATION
+        api.login()
+
+        notes = api.get_notes().json()["data"]
+
+        found = False
+
+        for note in notes:
+            if (
+                note["title"] == title
+                and note["description"] == description
+            ):
+                found = True
+                break
+
+        assert found, "UI created note not found in API"
+
+    finally:
+        driver.quit()
 
 
 # UI CREATE → API DELETE → UI VALIDATION
 
-def test_delete_note_using_api_and_verify_in_ui(driver):
+def test_delete_note_using_api_and_verify_in_ui():
+
     config = load_config()
 
-    login_page = LoginPage(driver)
-    notes_page = NotesPage(driver)
-    api = NotesAPI(config)
+    driver = webdriver.Chrome(
+        service=Service(ChromeDriverManager().install())
+    )
 
-    title = f"E2E Delete Note {int(time.time())}"
-    description = "This note will be deleted using API"
+    driver.maximize_window()
 
-    # UI LOGIN
-    driver.get(config["url"])
+    try:
+        login_page = LoginPage(driver)
+        notes_page = NotesPage(driver)
+        api = NotesAPI(config)
 
-    login_page.login(config["email"], config["password"])
+        title = f"E2E Delete Note {int(time.time())}"
+        description = "This note will be deleted using API"
 
-    # CREATE NOTE (UI)
-    notes_page.create_note(title, description, "Work")
+        # UI LOGIN
+        driver.get(config["url"])
 
-    # WAIT FOR UI SAVE
-    time.sleep(8)
+        login_page.login(
+            config["email"],
+            config["password"]
+        )
 
-    driver.refresh()
+        # CREATE NOTE (UI)
+        notes_page.create_note(
+            title,
+            description,
+            "Work"
+        )
 
-    time.sleep(5)
+        # WAIT FOR UI SAVE
+        time.sleep(8)
 
-    # VERIFY CREATED IN UI
-    assert not notes_page.is_note_not_visible(title)
+        driver.refresh()
 
-    # API LOGIN
-    api.login()
+        time.sleep(5)
 
-    # FIND NOTE IN API
-    notes = api.get_notes().json()["data"]
+        # VERIFY CREATED IN UI
+        assert not notes_page.is_note_not_visible(title)
 
-    note_id = None
+        # API LOGIN
+        api.login()
 
-    for note in notes:
-        if note["title"] == title:
-            note_id = note["id"]
-            break
+        # FIND NOTE IN API
+        notes = api.get_notes().json()["data"]
 
-    assert note_id is not None, "Note not found in API"
+        note_id = None
 
-    # DELETE VIA API
-    delete_response = api.delete_note(note_id)
+        for note in notes:
+            if note["title"] == title:
+                note_id = note["id"]
+                break
 
-    assert delete_response.status_code == 200
+        assert note_id is not None, "Note not found in API"
 
-    # CONFIRM DELETE IN API
-    after_notes = api.get_notes().json()["data"]
+        # DELETE VIA API
+        delete_response = api.delete_note(note_id)
 
-    assert not any(
-        n["id"] == note_id for n in after_notes
-    ), "Note still exists in API"
+        assert delete_response.status_code == 200
 
-    # WAIT FOR DELETE SYNC
-    time.sleep(3)
+        # CONFIRM DELETE IN API
+        after_notes = api.get_notes().json()["data"]
 
-    # REFRESH UI MULTIPLE TIMES
-    driver.refresh()
+        assert not any(
+            n["id"] == note_id for n in after_notes
+        ), "Note still exists in API"
 
-    time.sleep(2)
+        # WAIT FOR DELETE SYNC
+        time.sleep(3)
 
-    # VERIFY NOTE REMOVED FROM UI
-    page = driver.page_source
+        # REFRESH UI
+        driver.refresh()
 
-    assert title not in page
+        time.sleep(2)
+
+        # VERIFY NOTE REMOVED FROM UI
+        page = driver.page_source
+
+        assert title not in page
+
+    finally:
+        driver.quit()

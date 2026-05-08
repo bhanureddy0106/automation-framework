@@ -4,6 +4,8 @@ from pages.login_page import LoginPage
 from utils.config_loader import load_config
 from utils.performance_logger import log_performance  
 from utils.agentic_utils import measure_time
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
 
 # SIMPLE LOGIN TEST
 def test_login():
@@ -23,19 +25,45 @@ def test_login():
 
 # UI LOGIN 
 
-def test_successful_ui_login(driver):
+def test_successful_ui_login():
+
     config = load_config()
-    login_page = LoginPage(driver)
-    start = time.time()   #START TIMER
-    login_page.open_login_page()
-    measure_time(lambda: login_page.login(config["email"], config["password"]))
-    end = time.time()     #END TIMER
-    duration = end - start
-    print(f"[UI LOGIN FLOW TIME]: {duration}")
-    log_performance("UI_LOGIN_FLOW", duration)   #TREND LOG
-    page_text = driver.page_source.lower()
-    assert (
-        "notes" in driver.current_url.lower()
-        or "my notes" in page_text
-        or "add note" in page_text
+
+    driver = webdriver.Chrome(
+        service=Service(ChromeDriverManager().install())
     )
+
+    driver.maximize_window()
+
+    try:
+        login_page = LoginPage(driver)
+
+        start = time.time()   # START TIMER
+
+        login_page.open_login_page()
+
+        measure_time(
+            lambda: login_page.login(
+                config["email"],
+                config["password"]
+            )
+        )
+
+        end = time.time()     # END TIMER
+
+        duration = end - start
+
+        print(f"[UI LOGIN FLOW TIME]: {duration}")
+
+        log_performance("UI_LOGIN_FLOW", duration)
+
+        page_text = driver.page_source.lower()
+
+        assert (
+            "notes" in driver.current_url.lower()
+            or "my notes" in page_text
+            or "add note" in page_text
+        )
+
+    finally:
+        driver.quit()

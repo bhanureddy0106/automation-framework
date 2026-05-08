@@ -76,20 +76,47 @@ def test_ui_negative_invalid_login():
     config = load_config()
     driver = webdriver.Chrome()
     driver.maximize_window()
+
     try:
         driver.get(config["url"])
         base = BasePage(driver)
-        # Invalid Email
+
+        # 1️⃣ Invalid Email
         base.login("invalid_email", config["password"])
         time.sleep(2)
         page = driver.page_source.lower()
+
         assert (
-            "email" in page
+            "incorrect" in page
             or "invalid" in page
-            or "error" in page
-            or "cannot" in page
+            or "email or password" in page
         )
-        #Reload for next case
+
         driver.get(config["url"])
+
+        # 2️⃣ Invalid Password
+        base.login(config["email"], "wrong_password")
+        time.sleep(2)
+        page = driver.page_source.lower()
+
+        assert (
+            "incorrect" in page
+            or "invalid" in page
+            or "email or password" in page
+        )
+
+        driver.get(config["url"])
+
+        # 3️⃣ Both Invalid
+        base.login("wrong_email@test.com", "wrong_password")
+        time.sleep(2)
+        page = driver.page_source.lower()
+
+        assert (
+            "incorrect" in page
+            or "invalid" in page
+            or "email or password" in page
+        )
+
     finally:
         driver.quit()
