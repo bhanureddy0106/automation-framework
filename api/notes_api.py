@@ -9,7 +9,7 @@ class NotesAPI:
         self.password = config["password"]
         self.token = None
 
-    # ✅ ADD THIS METHOD (missing in your code)
+    
     def login(self):
         url = f"{self.base_url}/users/login"
 

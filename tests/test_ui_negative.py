@@ -81,7 +81,7 @@ def test_ui_negative_invalid_login():
         driver.get(config["url"])
         base = BasePage(driver)
 
-        # 1️⃣ Invalid Email
+        # Invalid Email
         base.login("invalid_email", config["password"])
         time.sleep(2)
         page = driver.page_source.lower()
@@ -94,7 +94,7 @@ def test_ui_negative_invalid_login():
 
         driver.get(config["url"])
 
-        # 2️⃣ Invalid Password
+        # Invalid Password
         base.login(config["email"], "wrong_password")
         time.sleep(2)
         page = driver.page_source.lower()
@@ -107,7 +107,7 @@ def test_ui_negative_invalid_login():
 
         driver.get(config["url"])
 
-        # 3️⃣ Both Invalid
+        # Both Invalid
         base.login("wrong_email@test.com", "wrong_password")
         time.sleep(2)
         page = driver.page_source.lower()

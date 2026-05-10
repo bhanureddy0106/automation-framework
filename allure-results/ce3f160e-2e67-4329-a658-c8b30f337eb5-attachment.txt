@@ -1,0 +1,2 @@
+[PERFORMANCE] Execution Time: 12.28 seconds
+[UI LOGIN TIME]: 18.322784900665283
